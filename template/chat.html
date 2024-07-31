@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curify Ai Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .chat-container {
+      width: 400px;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .chat-messages {
+      padding: 10px;
+      height: 300px;
+      overflow-y: scroll;
+    }
+    .message {
+      margin-bottom: 10px;
+    }
+    .message.sent {
+      text-align: right;
+    }
+    .message.received {
+      text-align: left;
+    }
+    .message-content {
+      padding: 5px 10px;
+      background-color: #f2f2f2;
+      border-radius: 10px;
+      display: inline-block;
+    }
+    .input-container {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+    }
+    .input-field {
+      flex: 1;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+    .file-input {
+      display: none;
+    }
+    .file-label {
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .send-button {
+      padding: 5px 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="input-container">
+    <input type="file" id="file-input" class="file-input" accept="image/*,.txt,.pdf,.docx,.doc">
+    <label for="file-input" class="file-label">Choose File</label>
+    <select id="language-select">
+      <option value="en">English</option>
+      <option value="uz">Uzbek</option>
+    </select>
+    <input type="text" id="message-input" class="input-field" placeholder="Type your message...">
+    <button id="send-button" class="send-button">Send</button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file-input');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.getElementById('chat-messages');
+
+    sendButton.addEventListener('click', function() {
+      const message = messageInput.value.trim();
+      const file = fileInput.files[0];
+      if (message !== '' || file) {
+        sendMessage(message, file);
+        messageInput.value = '';
+        fileInput.value = ''; // Clear file input after sending
+      }
+    });
+
+    function sendMessage(message, file) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', 'sent');
+      const messageContent = document.createElement('div');
+      messageContent.classList.add('message-content');
+      messageContent.textContent = message || (file ? 'File attached' : '');
+      messageDiv.appendChild(messageContent);
+      chatMessages.appendChild(messageDiv);
+      
+      if (file) {
+        sendFile(file);
+      } else {
+        // Send message to /generate_response
+        sendToGenerateResponse(message);
+      }
+      
+      // Scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function sendFile(file) {
+        console.log(file);
+        const selectedLang = document.getElementById('language-select').value;
+        ur='/predict?lang='+selectedLang;
+        const formData = new FormData();
+        formData.append('file', file, 'image.jpg'); // Ensure to append the file with its name and proper content type
+        console.log(formData);
+      
+      // Send file to /predict
+      fetch(ur, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Display response
+        const responseDiv = document.createElement('div');
+        responseDiv.classList.add('message', 'received');
+        const responseContent = document.createElement('div');
+        responseContent.classList.add('message-content');
+        responseContent.textContent = data.response; // Assuming the response contains the message from the server
+        responseDiv.appendChild(responseContent);
+        chatMessages.appendChild(responseDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      })
+      .catch(error => console.error('Error sending file:', error));
+    }
+
+    function sendToGenerateResponse(message) {
+      // Send message to /generate_response
+      const selectedLang = document.getElementById('language-select').value;
+        ur='/generate_response?lang='+selectedLang;
+      fetch(ur, {
+        method: 'POST',
+        body: JSON.stringify({ request: message }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Display response
+        const responseDiv = document.createElement('div');
+        responseDiv.classList.add('message', 'received');
+        const responseContent = document.createElement('div');
+        responseContent.classList.add('message-content');
+        responseContent.textContent = data.response; // Assuming the response contains the message from the server
+        responseDiv.appendChild(responseContent);
+        chatMessages.appendChild(responseDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      })
+      .catch(error => console.error('Error sending message:', error));
+    }
+  });
+</script>
+
+</body>
+</html>
