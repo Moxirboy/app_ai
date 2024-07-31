@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify , render_template
 from PIL import Image
 import io 
-import app  as gn
+import main  as gn
 
 
 
