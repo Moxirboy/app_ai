@@ -1,2 +1,4 @@
 Flask==3.0.2
-google-generativeai==0.1.0 
+google-ai-generativelanguage==0.6.6
+grpcio==1.62.0
+openai==1.7.2
